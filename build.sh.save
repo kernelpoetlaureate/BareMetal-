@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Compile the bootloader
+686-elf-gcc -ffreestanding -c kernel.c -o kernel.o
+
+# Link the kernel
+i686-elf-ld -o kernel.bin -T linker.ld kernel.o --oformat binary
+
+# Combine bootloader and kernel into final image
+cat boot.bin kernel.bin > os-image.bin
+
+# Create a 1.44MB floppy image
+dd if=/dev/zero of=floppy.img bs=512 count=2880
+dd if=os-image.bin of=floppy.img conv=notrunc
+
+echo "Build complete! Run with: qemu-system-i386 -fda floppy.img"
