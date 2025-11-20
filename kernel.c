@@ -1,17 +1,11 @@
-// Simple minimal kernel - FIXED VERSION
-void _start() {
-    // Very basic VGA output
-    volatile char* video = (volatile char*)0xB8000;
+void main() {
+    char* video_memory = (char*)0xb8000;
+    char* str = "gamarjoba";
     
-    // Simple message - don't clear entire screen initially
-    char* msg = "C Kernel Works!";
-    for (int i = 0; msg[i] != '\0'; i++) {
-        video[i * 2] = msg[i];
-        video[i * 2 + 1] = 0x0F;  // White on black
-    }
-    
-    // Hang
-    while(1) {
-        asm volatile ("hlt");
+    int i = 0;
+    while (str[i] != 0) {
+        video_memory[i * 2] = str[i];      // Character
+        video_memory[i * 2 + 1] = 0x0f;    // Attribute (White on Black)
+        i++;
     }
 }

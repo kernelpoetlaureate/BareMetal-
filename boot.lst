@@ -1,0 +1,205 @@
+     1                                  [org 0x7c00]
+     2                                  KERNEL_OFFSET equ 0x1000 ; The same one we used when linking the kernel
+     3                                  
+     4 00000000 8816[E300]                  mov [BOOT_DRIVE], dl ; BIOS stores our boot drive in DL, so it's best to remember this for later.
+     5                                  
+     6 00000004 BD0090                      mov bp, 0x9000       ; Set the stack.
+     7 00000007 89EC                        mov sp, bp
+     8                                  
+     9 00000009 BB[E400]                    mov bx, MSG_REAL_MODE
+    10 0000000C E80800                      call print_string
+    11                                  
+    12 0000000F E8AD00                      call load_kernel     ; Load our kernel
+    13                                  
+    14 00000012 E87B00                      call switch_to_pm    ; Note that we never return from here.
+    15                                  
+    16 00000015 EBFE                        jmp $
+    17                                  
+    18                                  %include "print_string.asm"
+     1                              <1> print_string:
+     2 00000017 60                  <1>     pusha
+     3 00000018 B40E                <1>     mov ah, 0x0e
+     4                              <1> .loop:
+     5 0000001A 8A07                <1>     mov al, [bx]
+     6 0000001C 3C00                <1>     cmp al, 0
+     7 0000001E 7407                <1>     je .done
+     8 00000020 CD10                <1>     int 0x10
+     9 00000022 83C301              <1>     add bx, 1
+    10 00000025 EBF3                <1>     jmp .loop
+    11                              <1> .done:
+    12 00000027 61                  <1>     popa
+    13 00000028 C3                  <1>     ret
+    19                                  %include "disk_load.asm"
+     1                              <1> disk_load:
+     2 00000029 52                  <1>     push dx         ; Store DX on stack so later we can recall how many sectors were request to be read ,
+     3                              <1>                     ; even if it is altered in the meantime
+     4 0000002A B402                <1>     mov ah, 0x02    ; BIOS read sector function
+     5 0000002C 88F0                <1>     mov al, dh      ; Read DH sectors
+     6 0000002E B500                <1>     mov ch, 0x00    ; Select cylinder 0
+     7 00000030 B600                <1>     mov dh, 0x00    ; Select head 0
+     8 00000032 B102                <1>     mov cl, 0x02    ; Start reading from second sector (i.e. after the boot sector)
+     9 00000034 CD13                <1>     int 0x13        ; BIOS interrupt
+    10 00000036 7206                <1>     jc disk_error   ; Jump if error (i.e. carry flag set)
+    11                              <1> 
+    12 00000038 5A                  <1>     pop dx          ; Restore DX from the stack
+    13 00000039 38C6                <1>     cmp dh, al      ; if AL (sectors read) != DH (sectors expected)
+    14 0000003B 7501                <1>     jne disk_error  ;   display error message
+    15 0000003D C3                  <1>     ret
+    16                              <1> 
+    17                              <1> disk_error:
+    18 0000003E BB[4600]            <1>     mov bx, DISK_ERROR_MSG
+    19 00000041 E8D3FF              <1>     call print_string
+    20 00000044 EBFE                <1>     jmp $
+    21                              <1> 
+    22 00000046 4469736B2072656164- <1> DISK_ERROR_MSG db "Disk read error!", 0
+    22 0000004F 206572726F722100    <1>
+    20                                  %include "gdt.asm"
+     1                              <1> ; GDT
+     2                              <1> gdt_start:
+     3                              <1> 
+     4                              <1> gdt_null: ; the mandatory null descriptor
+     5 00000057 00000000            <1>     dd 0x0 ; 'dd' means define double word (i.e. 4 bytes)
+     6 0000005B 00000000            <1>     dd 0x0
+     7                              <1> 
+     8                              <1> gdt_code: ; the code segment descriptor
+     9                              <1>     ; base=0x0, limit=0xfffff,
+    10                              <1>     ; 1st flags: (present)1 (privilege)00 (descriptor type)1 -> 1001b
+    11                              <1>     ; type flags: (code)1 (conforming)0 (readable)1 (accessed)0 -> 1010b
+    12                              <1>     ; 2nd flags: (granularity)1 (32-bit default)1 (64-bit seg)0 (AVL)0 -> 1100b
+    13 0000005F FFFF                <1>     dw 0xffff    ; Limit (bits 0-15)
+    14 00000061 0000                <1>     dw 0x0       ; Base (bits 0-15)
+    15 00000063 00                  <1>     db 0x0       ; Base (bits 16-23)
+    16 00000064 9A                  <1>     db 10011010b ; 1st flags, type flags
+    17 00000065 CF                  <1>     db 11001111b ; 2nd flags, Limit (bits 16-19)
+    18 00000066 00                  <1>     db 0x0       ; Base (bits 24-31)
+    19                              <1> 
+    20                              <1> gdt_data: ; the data segment descriptor
+    21                              <1>     ; Same as code segment except for the type flags:
+    22                              <1>     ; type flags: (code)0 (expand down)0 (writable)1 (accessed)0 -> 0010b
+    23 00000067 FFFF                <1>     dw 0xffff    ; Limit (bits 0-15)
+    24 00000069 0000                <1>     dw 0x0       ; Base (bits 0-15)
+    25 0000006B 00                  <1>     db 0x0       ; Base (bits 16-23)
+    26 0000006C 92                  <1>     db 10010010b ; 1st flags, type flags
+    27 0000006D CF                  <1>     db 11001111b ; 2nd flags, Limit (bits 16-19)
+    28 0000006E 00                  <1>     db 0x0       ; Base (bits 24-31)
+    29                              <1> 
+    30                              <1> gdt_end: ; The reason for putting a label at the end of the GDT is so we can have the assembler calculate
+    31                              <1>          ; the size of the GDT for the GDT descriptor (below)
+    32                              <1> 
+    33                              <1> ; GDT descriptior
+    34                              <1> gdt_descriptor:
+    35 0000006F 1700                <1>     dw gdt_end - gdt_start - 1 ; Size of our GDT, always less one of the true size
+    36 00000071 [57000000]          <1>     dd gdt_start               ; Start address of our GDT
+    37                              <1> 
+    38                              <1> ; Define some handy constants for the GDT segment descriptor offsets, which
+    39                              <1> ; are what segment registers must contain when in protected mode. For example,
+    40                              <1> ; when we set DS = 0x10 in PM, the CPU knows that we mean it to use the
+    41                              <1> ; segment described at offset 0x10 (i.e. 16 bytes) in our GDT, which in our
+    42                              <1> ; case is the DATA segment (0x0 -> NULL; 0x08 -> CODE; 0x10 -> DATA)
+    43                              <1> CODE_SEG equ gdt_code - gdt_start
+    44                              <1> DATA_SEG equ gdt_data - gdt_start
+    21                                  %include "print_string_pm.asm"
+     1                              <1> [bits 32]
+     2                              <1> ; Define some constants
+     3                              <1> VIDEO_MEMORY equ 0xb8000
+     4                              <1> WHITE_ON_BLACK equ 0x0f
+     5                              <1> 
+     6                              <1> ; prints a null-terminated string pointed to by EDX
+     7                              <1> print_string_pm:
+     8 00000075 60                  <1>     pusha
+     9 00000076 BA00800B00          <1>     mov edx, VIDEO_MEMORY ; Set EDX to the start of video memory.
+    10                              <1> 
+    11                              <1> .loop:
+    12 0000007B 8A03                <1>     mov al, [ebx]          ; Store the char at EBX in AL
+    13 0000007D B40F                <1>     mov ah, WHITE_ON_BLACK ; Store the attributes in AH
+    14                              <1> 
+    15 0000007F 3C00                <1>     cmp al, 0              ; if (al == 0), at end of string, so
+    16 00000081 740B                <1>     je .done               ; jump to done
+    17                              <1> 
+    18 00000083 668902              <1>     mov [edx], ax          ; Store char and attributes at current character cell
+    19 00000086 83C301              <1>     add ebx, 1             ; Increment EBX to the next char in string.
+    20 00000089 83C202              <1>     add edx, 2             ; Move to next character cell in vid mem.
+    21                              <1> 
+    22 0000008C EBED                <1>     jmp .loop
+    23                              <1> 
+    24                              <1> .done:
+    25 0000008E 61                  <1>     popa
+    26 0000008F C3                  <1>     ret
+    22                                  %include "switch_to_pm.asm"
+     1                              <1> [bits 16]
+     2                              <1> ; Switch to protected mode
+     3                              <1> switch_to_pm:
+     4 00000090 FA                  <1>     cli                     ; We must switch of interrupts until we have
+     5                              <1>                             ; set-up the protected mode interrupt vector
+     6                              <1>                             ; otherwise interrupts will run riot.
+     7                              <1> 
+     8 00000091 0F0116[6F00]        <1>     lgdt [gdt_descriptor]   ; Load our global descriptor table, which defines
+     9                              <1>                             ; the protected mode segments (e.g. for code and data)
+    10                              <1> 
+    11 00000096 0F20C0              <1>     mov eax, cr0            ; To make the switch to protected mode, we set
+    12 00000099 6683C801            <1>     or eax, 0x1             ; the first bit of CR0, a control register
+    13 0000009D 0F22C0              <1>     mov cr0, eax
+    14                              <1> 
+    15 000000A0 EA[A500]0800        <1>     jmp CODE_SEG:init_pm    ; Make a far jump (i.e. to a new segment) to our 32-bit
+    16                              <1>                             ; code. This also forces the CPU to flush its cache of
+    17                              <1>                             ; pre-fetched and real-mode decoded instructions, which can
+    18                              <1>                             ; cause problems.
+    19                              <1> 
+    20                              <1> [bits 32]
+    21                              <1> ; Initialise registers and the stack once in PM.
+    22                              <1> init_pm:
+    23 000000A5 66B81000            <1>     mov ax, DATA_SEG        ; Now in PM, our old segments are meaningless,
+    24 000000A9 8ED8                <1>     mov ds, ax              ; so we point our segment registers to the
+    25 000000AB 8ED0                <1>     mov ss, ax              ; data selector we defined in our GDT
+    26 000000AD 8EC0                <1>     mov es, ax
+    27 000000AF 8EE0                <1>     mov fs, ax
+    28 000000B1 8EE8                <1>     mov gs, ax
+    29                              <1> 
+    30 000000B3 BD00000900          <1>     mov ebp, 0x90000        ; Update our stack position so it is right
+    31 000000B8 89EC                <1>     mov esp, ebp            ; at the top of the free space.
+    32                              <1> 
+    33 000000BA E813000000          <1>     call BEGIN_PM           ; Finally, call some well-known label
+    23                                  
+    24                                  [bits 16]
+    25                                  
+    26                                  ; load_kernel
+    27                                  load_kernel:
+    28 000000BF BB[2D01]                    mov bx, MSG_LOAD_KERNEL
+    29 000000C2 E852FF                      call print_string
+    30                                  
+    31 000000C5 BB0010                      mov bx, KERNEL_OFFSET
+    32 000000C8 B60F                        mov dh, 15           ; Load the first 15 sectors (excluding the boot sector) from the boot disk (i.e. our kernel code) to address KERNEL_OFFSET
+    33 000000CA 8A16[E300]                  mov dl, [BOOT_DRIVE]
+    34 000000CE E858FF                      call disk_load
+    35                                  
+    36 000000D1 C3                          ret
+    37                                  
+    38                                  [bits 32]
+    39                                  ; This is where we arrive after switching to and initialising protected mode.
+    40                                  BEGIN_PM:
+    41 000000D2 BB[00010000]                mov ebx, MSG_PROT_MODE
+    42 000000D7 E899FFFFFF                  call print_string_pm
+    43                                  
+    44 000000DC E8(00100000)                call KERNEL_OFFSET   ; Now jump to the address of our loaded kernel code, assume the brace position, and cross your fingers.
+    45                                  
+    46 000000E1 EBFE                        jmp $
+    47                                  
+    48                                  ; Global variables
+    49 000000E3 00                      BOOT_DRIVE      db 0
+    50 000000E4 537461727465642069-     MSG_REAL_MODE   db "Started in 16-bit Real Mode", 0
+    50 000000ED 6E2031362D62697420-
+    50 000000F6 5265616C204D6F6465-
+    50 000000FF 00                 
+    51 00000100 537563636573736675-     MSG_PROT_MODE   db "Successfully landed in 32-bit Protected Mode", 0
+    51 00000109 6C6C79206C616E6465-
+    51 00000112 6420696E2033322D62-
+    51 0000011B 69742050726F746563-
+    51 00000124 746564204D6F646500 
+    52 0000012D 4C6F6164696E67206B-     MSG_LOAD_KERNEL db "Loading kernel into memory.", 0
+    52 00000136 65726E656C20696E74-
+    52 0000013F 6F206D656D6F72792E-
+    52 00000148 00                 
+    53                                  
+    54                                  ; Bootsector padding
+    55 00000149 00<rep B5h>             times 510-($-$$) db 0
+    56 000001FE 55AA                    dw 0xaa55
