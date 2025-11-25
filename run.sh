@@ -1,47 +1,29 @@
 #!/bin/bash
-set -e  # Exit on any error
+set -e
 
-echo "=== Building Bootloader ==="
-# Assemble the bootloader
-nasm -f bin boot.asm -o boot.bin -l boot.lst
-echo "✓ boot.bin created ($(stat -c%s boot.bin) bytes)"
+rm -f *.bin *.o
 
-echo ""
-echo "=== Compiling Kernel ==="
-# Compile the kernel
-# -ffreestanding: standard libraries not available
-# -c: compile only, don't link
-# -m32: compile for 32-bit mode
-# -fno-pie: disable position-independent executable
-# -fno-pic: disable position-independent code
-gcc -ffreestanding -m32 -fno-pie -fno-pic -c kernel.c -o kernel.o
-echo "✓ kernel.o created ($(stat -c%s kernel.o) bytes)"
+# 1. Assemblieren
+nasm -f bin boot.asm -o boot.bin
+nasm -f elf32 kernel_entry.asm -o kernel_entry.o
 
-echo ""
-echo "=== Linking Kernel ==="
-# Link the kernel
-# -o kernel.bin: output file
-# -Ttext 0x1000: the address where our code will be loaded
-# --oformat binary: output raw binary
-# -m elf_i386: link for 32-bit x86
-ld -o kernel.bin -Ttext 0x1000 kernel.o --oformat binary -m elf_i386
-echo "✓ kernel.bin created ($(stat -c%s kernel.bin) bytes)"
+# 2. Kompilieren
+gcc -m32 -ffreestanding -fno-pie -c kernel.c -o kernel.o
 
-echo ""
-echo "=== Creating OS Image ==="
-# Concatenate bootloader and kernel
+# 3. Linken (kernel_entry MUSS zuerst kommen)
+ld -m elf_i386 -o kernel.bin -Ttext 0x1000 kernel_entry.o kernel.o --oformat binary
+
+# 4. Zusammenfügen
 cat boot.bin kernel.bin > os-image.bin
-echo "✓ os-image.bin created ($(stat -c%s os-image.bin) bytes)"
 
-echo ""
-echo "=== Creating Floppy Image ==="
-# Create floppy image
-dd if=/dev/zero of=floppy.img bs=512 count=2880 2>/dev/null
-dd if=os-image.bin of=floppy.img conv=notrunc 2>/dev/null
-echo "✓ floppy.img created"
+# --- WICHTIGE ÄNDERUNG HIER ---
 
-echo ""
-echo "=== Launching Bochs ==="
-# Run Bochs with debugger enabled
-bochs -f bochsrc.txt -q -dbg
+# Wir füllen die Datei mit Nullen auf, bis sie exakt 1.44 MB (Standard Floppy Größe) hat.
+# Das verhindert jeden "Read Error" wegen fehlender Daten.
+dd if=/dev/zero of=os-image.bin bs=1024 count=1440 conv=notrunc oflag=append 2>/dev/null || true
 
+# 5. Starten (Als Floppy!)
+echo "Starte QEMU im Floppy-Modus..."
+# -fda zwingt QEMU, das als Diskette A: zu laden.
+# Disketten haben eine einfache Geometrie, die unser boot.asm (Cylinder 0, Head 0) liebt.
+qemu-system-i386 -fda os-image.bin
