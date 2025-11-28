@@ -1,30 +1,27 @@
- BareMetal x86 Kernel
+# BareMetal x86 Kernel
 
-A minimal bare-metal x86 operating system kernel written in Assembly (NASM) and C. This project demonstrates the fundamentals of OS development, including bootloader creation, protected mode switching, and kernel initialization.
+A minimal bare-metal x86 operating system kernel written entirely in **pure Assembly (NASM)**. This project demonstrates the fundamentals of OS development, including bootloader creation, disk loading, and kernel initialization - all without using C.
 
- Project Overview
-This is a simple educational operating system that boots from scratch, loads a kernel from disk, switches to 32-bit protected mode, and executes C code to display text on screen. The entire system runs without any operating system underneath - directly on the hardware (or emulator).
+## Project Overview
+This is a simple educational operating system that boots from scratch, loads a kernel from disk, and executes assembly code to display text on screen. The entire system runs without any operating system underneath - directly on the hardware (or emulator).
 
- Project Structure
+## Project Structure
 
-
+```
 nasmkernel/
-├── boot.asm            16-bit bootloader (512 bytes)
-├── kernel_entry.asm    Kernel entry point with protected mode setup
-├── kernel.c            C kernel code
-├── build.sh            Build script (builds and runs)
-├── run.sh              Enhanced run script with floppy disk emulation
-├── test.s              GCC-generated assembly output (for debugging)
-├── boot.bin            Compiled bootloader (generated)
-├── kernel_entry.o      Compiled kernel entry (generated)
-├── kernel.o            Compiled C kernel (generated)
-├── kernel.bin          Linked kernel binary (generated)
-└── os-image.bin        Final bootable OS image (generated)
+├── boot.asm            # 16-bit bootloader (512 bytes)
+├── kernel.asm          # Pure assembly kernel (32-bit)
+├── memalloc.asm        # Memory allocator module
+├── build.sh            # Build script
+├── run.sh              # Run script with QEMU
+├── boot.bin            # Compiled bootloader (generated)
+├── kernel.bin          # Compiled kernel (generated)
+└── os-image.bin        # Final bootable OS image (generated)
+```
 
+## Components
 
- Components
-
- 1. Bootloader (`boot.asm`)
+### 1. Bootloader (`boot.asm`)
 
 The bootloader is a 512-byte program that:
 - Runs in 16-bit real mode
@@ -35,111 +32,90 @@ The bootloader is a 512-byte program that:
 - Includes debug output ('S' for start, 'K' for kernel loaded, 'E' for error)
 - Jumps to the loaded kernel at `0x1000`
 
-Key Features:
+**Key Features:**
 - Boot signature: `0xaa55`
 - Load address: `0x7c00` (standard BIOS location)
 - Kernel load address: `0x1000`
 - Sectors loaded: 15
 
- 2. Kernel Entry (`kernel_entry.asm`)
+### 2. Kernel (`kernel.asm`)
 
-The kernel entry point handles the transition from 16-bit real mode to 32-bit protected mode:
-
-16-bit Real Mode Section:
-- Displays 'A' (Assembly) to video memory as a debug marker
-- Disables interrupts (`cli`)
-- Loads the Global Descriptor Table (GDT)
-- Enables protected mode by setting bit 0 of CR0
-- Performs a far jump to flush the CPU pipeline
-
-32-bit Protected Mode Section:
-- Sets up segment registers (DS, SS, ES, FS, GS)
-- Initializes stack at `0x90000`
-- Displays 'P' (Protected) to video memory
-- Calls the C kernel function `kmain()`
-
-GDT Structure:
-- Null descriptor (required)
-- Code segment: Base 0x0, Limit 0xFFFFF, 32-bit, executable
-- Data segment: Base 0x0, Limit 0xFFFFF, 32-bit, writable
-
- 3. C Kernel (`kernel.c`)
-
-A minimal C kernel that:
+A pure assembly kernel that:
 - Runs in 32-bit protected mode
+- Initializes segment registers (DS, ES, SS)
+- Sets up stack at `0x90000`
 - Directly accesses VGA text mode video memory at `0xB8000`
-- Displays "Hallo Welt" (Hello World in German) on screen
-- Uses white text on black background (color attribute `0x0F`)
-- Enters an infinite loop to prevent the kernel from exiting
+- Includes a simple bump allocator for memory management
+- Displays characters on screen using direct memory writes
 
- Building and Running
+**Features:**
+- Pure assembly - no C dependencies
+- Memory allocator with heap management (1MB - 4MB range)
+- Direct hardware access
+- Modular design for easy expansion
 
- Prerequisites
+### 3. Memory Allocator (`memalloc.asm`)
 
-- NASM (Netwide Assembler) - for assembling `.asm` files
-- GCC - with 32-bit support (`gcc-multilib` on Debian/Ubuntu)
-- LD - GNU linker with i386 support
-- QEMU - x86 emulator (`qemu-system-i386`)
+Simple bump allocator implementation:
+- Heap starts at `0x100000` (1 MB)
+- Heap limit at `0x400000` (4 MB)
+- `malloc` function takes size in ECX, returns pointer in EAX
+- Returns 0 on allocation failure
+
+## Building and Running
+
+### Prerequisites
+
+- **NASM** (Netwide Assembler) - for assembling `.asm` files
+- **QEMU** - x86 emulator (`qemu-system-i386` or `qemu-system-x86_64`)
 
 Install on Debian/Ubuntu:
-bash
-sudo apt-get install nasm gcc-multilib qemu-system-x86
+```bash
+sudo apt-get install nasm qemu-system-x86
+```
 
+### Build and Run
 
- Build and Run
-
- Option 1: Using `build.sh`
-bash
+#### Option 1: Using `build.sh`
+```bash
 chmod +x build.sh
 ./build.sh
-
+```
 
 This script:
 1. Assembles the bootloader to raw binary
-2. Assembles kernel entry to ELF32 object
-3. Compiles C kernel with `-m32 -ffreestanding -fno-pie`
-4. Links kernel entry and C kernel to binary at `0x1000`
-5. Concatenates bootloader and kernel into `os-image.bin`
-6. Launches QEMU
+2. Assembles the kernel to raw binary
+3. Concatenates bootloader and kernel into `os-image.bin`
 
- Option 2: Using `run.sh` 
-bash
+#### Option 2: Using `run.sh`
+```bash
 chmod +x run.sh
 ./run.sh
+```
 
+This script builds the OS image and launches it in QEMU.
 
-This enhanced script:
-- Cleans previous build artifacts
-- Performs all build steps
-- Pads the OS image to 1.44 MB (standard floppy size)
-- Runs QEMU with floppy disk emulation (`-fda`)
-- Prevents disk read errors with proper geometry
+### Manual Build Steps
 
- Manual Build Steps
-
-bash
- 1. Assemble bootloader
+```bash
+# 1. Assemble bootloader
 nasm -f bin boot.asm -o boot.bin
 
- 2. Assemble kernel entry
-nasm -f elf32 kernel_entry.asm -o kernel_entry.o
+# 2. Assemble kernel
+nasm -f bin kernel.asm -o kernel.bin
 
- 3. Compile C kernel
-gcc -m32 -ffreestanding -fno-pie -c kernel.c -o kernel.o
-
- 4. Link kernel (entry point must come first!)
-ld -m elf_i386 -o kernel.bin -Ttext 0x1000 kernel_entry.o kernel.o --oformat binary
-
- 5. Create OS image
+# 3. Create OS image
 cat boot.bin kernel.bin > os-image.bin
 
- 6. Run with QEMU
+# 4. Run with QEMU
 qemu-system-i386 -fda os-image.bin
+# or
+qemu-system-x86_64 -drive format=raw,file=os-image.bin
+```
 
+## Technical Details
 
- Technical Details
-
- Memory Layout
+### Memory Layout
 
 | Address Range | Purpose |
 |--------------|---------|
@@ -147,37 +123,37 @@ qemu-system-i386 -fda os-image.bin
 | `0x0400 - 0x04FF` | BIOS Data Area |
 | `0x0500 - 0x7BFF` | Free memory |
 | `0x7C00 - 0x7DFF` | Bootloader (512 bytes) |
-| `0x7E00 - 0x7FFFF` | Stack grows down from here |
+| `0x7E00 - 0x0FFFF` | Stack (grows down) |
 | `0x1000 - ...` | Kernel code and data |
 | `0x90000` | Kernel stack (in protected mode) |
 | `0xB8000 - 0xBFFFF` | VGA text mode video memory |
+| `0x100000 - 0x400000` | Heap (managed by allocator) |
 
- Boot Process
+### Boot Process
 
-1. BIOS POST - Hardware initialization
-2. BIOS Boot - Loads first sector (bootloader) from disk to `0x7c00`
-3. Bootloader Execution:
+1. **BIOS POST** - Hardware initialization
+2. **BIOS Boot** - Loads first sector (bootloader) from disk to `0x7c00`
+3. **Bootloader Execution:**
    - Saves boot drive number
    - Sets up stack
    - Loads kernel from disk sectors 2-16 to `0x1000`
    - Jumps to kernel entry
-4. Kernel Entry:
-   - Switches from 16-bit real mode to 32-bit protected mode
-   - Sets up GDT and segment registers
-   - Calls C kernel
-5. C Kernel:
-   - Displays text to screen
-   - Halts in infinite loop
+4. **Kernel Execution:**
+   - Initializes segment registers
+   - Sets up stack
+   - Runs kernel code
+   - Displays output to VGA memory
 
- Compiler Flags Explained
+### Assembly Directives Explained
 
-- `-m32`: Generate 32-bit code
-- `-ffreestanding`: Freestanding environment (no standard library)
-- `-fno-pie`: Disable position-independent executable (we need fixed addresses)
-- `-Ttext 0x1000`: Set text section to load at address `0x1000`
-- `--oformat binary`: Output raw binary (no ELF headers)
+- `[org 0x7c00]`: Origin address where bootloader is loaded
+- `[org 0x1000]`: Origin address where kernel is loaded
+- `[bits 16]`: Generate 16-bit code (real mode)
+- `[bits 32]`: Generate 32-bit code (protected mode)
+- `times N db 0`: Repeat padding N times
+- `dw 0xaa55`: Boot signature (little-endian)
 
- Debug Markers
+### Debug Markers
 
 The system outputs debug characters to help track boot progress:
 
@@ -186,70 +162,80 @@ The system outputs debug characters to help track boot progress:
 | S | Start - Bootloader running | `boot.asm` |
 | K | Kernel loaded from disk | `boot.asm` |
 | E | Error during disk read | `boot.asm` |
-| A | Assembly - Kernel entry (16-bit) | `kernel_entry.asm` |
-| P | Protected mode active (32-bit) | `kernel_entry.asm` |
-| Hallo Welt | C kernel running | `kernel.c` |
+| d | Kernel running (or custom char) | `kernel.asm` |
 
-  Troubleshooting
+## Troubleshooting
 
- Common Issues
+### Common Issues
 
-Problem: "Booting from Hard Disk..." but nothing happens
-- Solution: Use `run.sh` which properly formats the image as a floppy disk
+**Problem:** "Booting from Hard Disk..." but nothing happens
+- **Solution:** Ensure boot signature `0xaa55` is present at bytes 510-511
 
-Problem: Disk read errors
-- Solution: Ensure the OS image is padded to proper size (1.44 MB for floppy)
+**Problem:** Disk read errors
+- **Solution:** Verify the OS image contains both bootloader and kernel
 
-Problem: Only seeing 'S' or 'SK' but no kernel output
-- Solution: Check that kernel is being loaded to correct address and linked properly
+**Problem:** Only seeing 'S' or 'SK' but no kernel output
+- **Solution:** Check that kernel is assembled with `[org 0x1000]` and loaded to correct address
 
-Problem: Compilation errors about 32-bit support
-- Solution: Install `gcc-multilib` package
+**Problem:** Kernel displays wrong characters
+- **Solution:** Ensure kernel is in 32-bit mode and VGA memory address is `0xB8000`
 
- Debugging Tips
+### Debugging Tips
 
-1. Check boot signature: `xxd boot.bin | tail -1` should show `aa55` at the end
-2. Verify kernel size: `ls -lh kernel.bin` - should be reasonable size
-3. Inspect OS image: `xxd os-image.bin | head -20` to see bootloader code
-4. Use QEMU monitor: Press `Ctrl+Alt+2` in QEMU for monitor console
-5. Enable QEMU debug: Add `-d int,cpu_reset` to QEMU command for verbose output
+1. **Check boot signature:** `xxd boot.bin | tail -1` should show `aa55` at the end
+2. **Verify kernel size:** `ls -lh kernel.bin` - should be reasonable size
+3. **Inspect OS image:** `xxd os-image.bin | head -20` to see bootloader code
+4. **Use QEMU monitor:** Press `Ctrl+Alt+2` in QEMU for monitor console
+5. **Enable QEMU debug:** Add `-d int,cpu_reset` to QEMU command for verbose output
+6. **Check file sizes:** `ls -lh *.bin` to verify all binaries were created
 
- Learning Resources
+## Learning Resources
 
 This project demonstrates:
 - x86 assembly programming (NASM syntax)
 - BIOS interrupts and services
 - Bootloader development
-- Real mode to protected mode transition
-- Global Descriptor Table (GDT) setup
-- Bare-metal C programming
-- Memory-mapped I/O (VGA text mode)
-- Linking and binary formats
+- Disk I/O with INT 0x13
+- VGA text mode programming
+- Memory-mapped I/O
+- Bare-metal programming without C
+- Simple memory allocation
 
- Next Steps
+## Next Steps
 
 Potential enhancements:
-- [ ] Add keyboard input handling
+- [ ] Add protected mode switch in bootloader
+- [ ] Implement Global Descriptor Table (GDT)
+- [ ] Add keyboard input handling (INT 0x16 or port I/O)
 - [ ] Implement interrupt descriptor table (IDT)
-- [ ] Add more VGA text functions (scrolling, colors)
-- [ ] Implement basic memory management
-- [ ] Add support for reading/writing files
+- [ ] Add more VGA text functions (scrolling, colors, cursor)
+- [ ] Improve memory allocator (free, realloc)
+- [ ] Add string manipulation functions
 - [ ] Create a simple shell
-- [ ] Switch to long mode (64-bit)
+- [ ] Implement basic file system
 - [ ] Add multitasking support
 
- License
+## Why Pure Assembly?
+
+This project uses **pure assembly** instead of C to:
+- Eliminate all dependencies on compilers and standard libraries
+- Provide complete control over every instruction
+- Demonstrate low-level hardware interaction
+- Simplify the build process (no linking complexities)
+- Serve as an educational foundation for understanding how kernels work
+
+## License
 
 Educational project - free to use and modify.
 
- Acknowledgments
+## Acknowledgments
 
 Built with inspiration from OS development tutorials and bare-metal programming resources. Special thanks to the NASM and QEMU communities.
 
+---
 
-Author: Giorgi  
-Last Updated: November 2025  
-Language: Assembly (NASM), C  
-Target: x86 (32-bit Protected Mode)
-
+**Author:** Giorgi  
+**Last Updated:** November 2025  
+**Language:** Assembly (NASM)  
+**Target:** x86 (16-bit Real Mode → 32-bit Protected Mode)
 
