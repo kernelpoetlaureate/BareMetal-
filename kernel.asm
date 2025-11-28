@@ -24,5 +24,37 @@ kernel_main:
     ; ... rest of characters ...
     ret
 
+
+; ============================================
+; MEMORY ALLOCATOR
+; ============================================
+
+; Simple bump allocator
+; ECX = size in bytes
+; Returns: EAX = address (or 0 if failed)
+malloc:
+    mov eax, [heap_current]
+    mov ebx, eax
+    add ebx, ecx
+    cmp ebx, [heap_end]
+    jg .failed
+    
+    mov [heap_current], ebx
+    ret
+.failed:
+    xor eax, eax
+    ret
+; ============================================
+; DATA SECTION
+; ============================================
+
+msg_welcome db 'Welcome to Kernel v0.1', 0
+
+; Heap boundaries
+heap_start dd 0x100000      ; 1 MB
+heap_current dd 0x100000
+heap_end dd 0x400000        ; 4 MB limit
+
+
 ; Optional: Add more functions below
 times 512-($-$$) db 0  ; Padding if you want alignment
