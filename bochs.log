@@ -28,44 +28,44 @@
 00000000000i[USBCTL] Pluggable USB devices
 00000000000i[USBCTL]   printer mouse tablet keypad keyboard floppy hub disk
 00000000000i[USBCTL]   cdrom
-00000000000i[MEM0  ] allocated memory at 0x718a35ddd010. after alignment, vector=0x718a35dde000, block_size = 128K
+00000000000i[MEM0  ] allocated memory at 0x7078f79dd010. after alignment, vector=0x7078f79de000, block_size = 128K
 00000000000i[MEM0  ] 32.00MB
 00000000000i[MEM0  ] mem block size = 0x00020000, blocks=256
 00000000000i[MEM0  ] rom at 0xfffe0000/131072 ('/usr/share/bochs/BIOS-bochs-latest')
 00000000000i[CPU0  ] WARNING: RDRAND would not produce true random numbers !
 00000000000i[CPU0  ] initialized CPU model corei7_haswell_4770
 00000000000i[DEV   ] will paste characters every 100 iodev timer ticks
-00000000000i[      ] lt_dlhandle is 0x607780095e50
+00000000000i[      ] lt_dlhandle is 0x5babbe263e50
 00000000000i[PLUGIN] loaded plugin libbx_soundalsa.so
-00000000000i[      ] lt_dlhandle is 0x6077800a9500
+00000000000i[      ] lt_dlhandle is 0x5babbe277500
 00000000000i[PLUGIN] loaded plugin libbx_pci.so
-00000000000i[      ] lt_dlhandle is 0x607780099030
+00000000000i[      ] lt_dlhandle is 0x5babbe267030
 00000000000i[PLUGIN] loaded plugin libbx_pci2isa.so
-00000000000i[      ] lt_dlhandle is 0x60778009a3f0
+00000000000i[      ] lt_dlhandle is 0x5babbe2683f0
 00000000000i[PLUGIN] loaded plugin libbx_usb_uhci.so
-00000000000i[      ] lt_dlhandle is 0x6077800b6ed0
+00000000000i[      ] lt_dlhandle is 0x5babbe284ed0
 00000000000i[PLUGIN] loaded plugin libbx_acpi.so
-00000000000i[      ] lt_dlhandle is 0x6077800b79b0
+00000000000i[      ] lt_dlhandle is 0x5babbe2859b0
 00000000000i[PLUGIN] loaded plugin libbx_hpet.so
-00000000000i[      ] lt_dlhandle is 0x6077800b8840
+00000000000i[      ] lt_dlhandle is 0x5babbe286840
 00000000000i[PLUGIN] loaded plugin libbx_cmos.so
-00000000000i[      ] lt_dlhandle is 0x6077800b8f80
+00000000000i[      ] lt_dlhandle is 0x5babbe286f80
 00000000000i[PLUGIN] loaded plugin libbx_dma.so
-00000000000i[      ] lt_dlhandle is 0x6077800b9900
+00000000000i[      ] lt_dlhandle is 0x5babbe287900
 00000000000i[PLUGIN] loaded plugin libbx_pic.so
-00000000000i[      ] lt_dlhandle is 0x6077800ba150
+00000000000i[      ] lt_dlhandle is 0x5babbe288150
 00000000000i[PLUGIN] loaded plugin libbx_pit.so
-00000000000i[      ] lt_dlhandle is 0x6077800baa30
+00000000000i[      ] lt_dlhandle is 0x5babbe288a30
 00000000000i[PLUGIN] loaded plugin libbx_vga.so
-00000000000i[      ] lt_dlhandle is 0x6077800bc0e0
+00000000000i[      ] lt_dlhandle is 0x5babbe28a0e0
 00000000000i[PLUGIN] loaded plugin libbx_floppy.so
-00000000000i[      ] lt_dlhandle is 0x6077800bcf00
+00000000000i[      ] lt_dlhandle is 0x5babbe28af00
 00000000000i[PLUGIN] loaded plugin libbx_ioapic.so
-00000000000i[      ] lt_dlhandle is 0x6077800bd840
+00000000000i[      ] lt_dlhandle is 0x5babbe28b840
 00000000000i[PLUGIN] loaded plugin libbx_keyboard.so
-00000000000i[      ] lt_dlhandle is 0x6077800be160
+00000000000i[      ] lt_dlhandle is 0x5babbe28c160
 00000000000i[PLUGIN] loaded plugin libbx_harddrv.so
-00000000000i[      ] lt_dlhandle is 0x6077800c0220
+00000000000i[      ] lt_dlhandle is 0x5babbe28e220
 00000000000i[PLUGIN] loaded plugin libbx_pci_ide.so
 00000000000i[PLUGIN] init_dev of 'pci' plugin device by virtual method
 00000000000i[DEV   ] i440FX PMC present at device 0, function 0
@@ -73,7 +73,7 @@
 00000000000i[DEV   ] PIIX3 PCI-to-ISA bridge present at device 1, function 0
 00000000000i[PLUGIN] init_dev of 'cmos' plugin device by virtual method
 00000000000i[CMOS  ] Using local time for initial clock
-00000000000i[CMOS  ] Setting initial clock to: Sat Nov 29 10:49:25   2025 tz=utc (time0=1764413365)
+00000000000i[CMOS  ] Setting initial clock to: Sat Nov 29 12:45:05   2025 tz=utc (time0=1764420305)
 00000000000i[PLUGIN] init_dev of 'dma' plugin device by virtual method
 00000000000i[DMA   ] channel 4 used by cascade
 00000000000i[PLUGIN] init_dev of 'pic' plugin device by virtual method
@@ -251,3 +251,51 @@
 00000000000i[PLUGIN] reset of 'gameport' plugin device by virtual method
 00000000000i[PLUGIN] reset of 'usb_uhci' plugin device by virtual method
 00000000000i[      ] set SIGINT handler to bx_debug_ctrlc_handler
+00000001740i[BIOS  ] BIOS BUILD DATE: 03/02/25
+00000314450i[KBD   ] reset-disable command received
+00000316393i[BIOS  ] Starting rombios32
+00000316814i[BIOS  ] Shutdown flag 0
+00000317416i[BIOS  ] ram_size=0x02000000
+00000317841i[BIOS  ] ram_end=32MB
+00000358576i[BIOS  ] Found 1 cpu(s)
+00000372497i[BIOS  ] bios_table_addr: 0x000fa168 end=0x000fcc00
+00000389021i[PCI   ] i440FX PMC write to PAM register 59 (TLB Flush)
+00000405650i[P2ISA ] PCI IRQ routing: PIRQA# set to 0x0b
+00000405666i[P2ISA ] PCI IRQ routing: PIRQB# set to 0x09
+00000405683i[P2ISA ] PCI IRQ routing: PIRQC# set to 0x0b
+00000405700i[P2ISA ] PCI IRQ routing: PIRQD# set to 0x09
+00000405710i[P2ISA ] write: ELCR2 = 0x0a
+00000406444i[BIOS  ] PIIX3/PIIX4 init: elcr=00 0a
+00000420063i[BIOS  ] PCI: bus=0 devfn=0x00: vendor_id=0x8086 device_id=0x1237 class=0x0600
+00000422353i[BIOS  ] PCI: bus=0 devfn=0x08: vendor_id=0x8086 device_id=0x7000 class=0x0601
+00000424482i[BIOS  ] PCI: bus=0 devfn=0x09: vendor_id=0x8086 device_id=0x7010 class=0x0101
+00000424721i[PIDE  ] BAR #4: i/o base address = 0xc000
+00000425340i[BIOS  ] region 4: 0x0000c000
+00000427312i[BIOS  ] PCI: bus=0 devfn=0x0a: vendor_id=0x8086 device_id=0x7020 class=0x0c03
+00000427530i[UHCI  ] BAR #4: i/o base address = 0xc020
+00000428149i[BIOS  ] region 4: 0x0000c020
+00000428275i[UHCI  ] new IRQ line = 9
+00000430137i[BIOS  ] PCI: bus=0 devfn=0x0b: vendor_id=0x8086 device_id=0x7113 class=0x0680
+00000430420i[ACPI  ] new IRQ line = 11
+00000430434i[ACPI  ] new IRQ line = 9
+00000430467i[ACPI  ] new PM base address: 0xb000
+00000430481i[ACPI  ] new SM base address: 0xb100
+00000430508i[PCI   ] setting SMRAM control register to 0x4a
+00000439000i[CPU0  ] Enter to System Management Mode
+00000439000i[CPU0  ] enter_system_management_mode: temporary disable VMX while in SMM mode
+00000439010i[CPU0  ] RSM: Resuming from System Management Mode
+00000447422i[PCI   ] setting SMRAM control register to 0x0a
+00000474035i[BIOS  ] MP table addr=0x000fa240 MPC table addr=0x000fa170 size=0xc8
+00000475635i[BIOS  ] SMBIOS table addr=0x000fa250
+00000477717i[BIOS  ] ACPI tables: RSDP addr=0x000fa370 ACPI DATA addr=0x01ff0000 size=0xff8
+00000479976i[BIOS  ] Firmware waking vector 0x1ff00cc
+00000481966i[PCI   ] i440FX PMC write to PAM register 59 (TLB Flush)
+00000482653i[BIOS  ] bios_table_cur_addr: 0x000fa394
+00000600773i[VBIOS ] VGABios $Id: vgabios.c 288 2021-05-28 19:05:28Z vruppert $
+00000600844i[BXVGA ] VBE known Display Interface b0c0
+00000600876i[BXVGA ] VBE known Display Interface b0c5
+00000603519i[VBIOS ] VBE Bios $Id: vbe.c 292 2021-06-03 12:24:22Z vruppert $
+00000796277i[BIOS  ] ata0-0: PCHS=1/1/63 translation=none LCHS=1/1/63
+00004359285i[BIOS  ] IDE time out
+00016297139i[BIOS  ] Booting from 0000:7c00
+00016301816i[      ] Ctrl-C detected in signal handler.
