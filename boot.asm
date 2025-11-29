@@ -1,9 +1,44 @@
+;pre 0x7c00 area is just a pool of zeroes and BIOS related stuff
+;it looks like this
+; 0x0000000000007ba0 <bogus+     160>:    0x00000000      0x00000000
+; 0x0000000000007bb0 <bogus+     176>:    0x00000000      0x00000000
+; 0x0000000000007bc0 <bogus+     192>:    0x00000000      0x00000000
+; 0x0000000000007bd0 <bogus+     208>:    0x00000000      0x00000000
+; 0x0000000000007be0 <bogus+     224>:    0x00000000      0x00000000
+; 0x0000000000007bf0 <bogus+     240>:    0x00000000      0x00000000
+
+; the registers themselves, will contain trash values from the bios, like this :
+;rax: 00000000_6000aa55 - bios checked the signature, loaded it into ax and left it there
+;rbx: 00000000_00000000
+;rcx: 00000000_00090000
+;rdx: 00000000_00000080 - this is the 0x80 boot drive, bios set dl=0x80
+;rsp: 00000000_0000ffd6
+;rbp: 00000000_00000000
+;rsi: 00000000_000e0000
+;rdi: 00000000_0000ffac
+;r8 : 00000000_00000000
+;r9 : 00000000_00000000
+;r10: 00000000_00000000
+;r11: 00000000_00000000
+;r12: 00000000_00000000
+;r13: 00000000_00000000
+;r14: 00000000_00000000
+;r15: 00000000_00000000
+;rip: 00000000_00007c00
+
+
+;we start at 0x7c00, this is where we place our bootloader. this very first
+;address contains the very first instructions from our code below. 
 [org 0x7c00]
 [bits 16]
 
 global _start
 
 _start:
+
+;interestingly, the below mov instruction is the first actual instruction that exists in bootloader
+;code. 0x897c00bd7cb51688 is the first instruction. which translates to "mov byte ptr ds:0x7cb5, dl ; 8816b57c"
+
 ; when bios loads the bootloader, it stores the boot drive in the dl register, in this case the value is 0x80
     mov [BOOT_DRIVE], dl ; moved 0x80 to BOOT_DRIVE
 
@@ -63,6 +98,8 @@ return_from_disk_load:
 ; ==========================================
 ; MANUAL FUNCTION: disk_load
 ; ==========================================
+
+
 disk_load:
     ; == REPLACING "push dx" ==
     sub sp, 2            ; Grow stack
@@ -70,8 +107,7 @@ disk_load:
     mov [bp], dx         ; Store DX manually
 
     ; --- BIOS INTERRUPT ---
-    ; (INT is a software interrupt, replacing it with raw I/O 
-    ; would require 100+ lines of ATA controller code, so we keep INT)
+
     mov ah, 0x02
     mov al, dh
     mov ch, 0x00
