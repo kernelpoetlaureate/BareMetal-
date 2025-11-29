@@ -1,0 +1,11 @@
+# Bochs debugger commands
+# This file is loaded when Bochs starts in debug mode
+
+# Set breakpoint at boot sector start
+# b 0x7c00
+
+# Show registers on every step
+# set $auto_disassemble = 1
+
+# Start execution (remove this line if you want to start paused)
+# c

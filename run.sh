@@ -16,6 +16,11 @@ cat boot.bin kernel.bin > os-image.bin
 # 4. Pad to floppy size (1.44 MB)
 dd if=/dev/zero of=os-image.bin bs=1024 count=1440 conv=notrunc oflag=append 2>/dev/null || true
 
-# 5. Run in QEMU
-echo "Starte QEMU im Floppy-Modus..."
-qemu-system-i386 -fda os-image.bin
+# Choose emulator
+if [ "$1" == "bochs" ]; then
+    echo "Starting Bochs with debugger..."
+    bochs -f bochsrc.txt -dbg
+else
+    echo "Starte QEMU im Floppy-Modus..."
+    qemu-system-i386 -fda os-image.bin -d guest_errors
+fi
