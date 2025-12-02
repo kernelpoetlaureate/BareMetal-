@@ -65,7 +65,7 @@ _start:
     mov word [bp], return_from_disk_load ; Save the label address here
     
     ; 2. Jump to the function
-    jmp disk_load
+    jmp disk_load ; execution jumps to the line 103
 
 return_from_disk_load:
     ; We are back!
@@ -206,9 +206,11 @@ DATA_SEG equ gdt_data - gdt_start
 ; ==========================================
 ; 32-BIT PROTECTED MODE
 ; ==========================================
+; after flushing and jumping we pick up from here
+
 [bits 32]
 init_pm:
-    mov ax, DATA_SEG
+    mov ax, DATA_SEG ;ax becomes 0x0010 and now its a selector/index
     mov ds, ax
     mov ss, ax
     mov es, ax
@@ -219,7 +221,7 @@ init_pm:
     mov ebp, 0x90000
     mov esp, ebp
 
-    jmp 0x1000
+    jmp 0x1000 ; this jumps to the kernel.asm
 
 [bits 16]
 BOOT_DRIVE: db 0

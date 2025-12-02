@@ -28,44 +28,44 @@
 00000000000i[USBCTL] Pluggable USB devices
 00000000000i[USBCTL]   printer mouse tablet keypad keyboard floppy hub disk
 00000000000i[USBCTL]   cdrom
-00000000000i[MEM0  ] allocated memory at 0x7f7ba71dd010. after alignment, vector=0x7f7ba71de000, block_size = 128K
+00000000000i[MEM0  ] allocated memory at 0x78efc6564010. after alignment, vector=0x78efc6565000, block_size = 128K
 00000000000i[MEM0  ] 32.00MB
 00000000000i[MEM0  ] mem block size = 0x00020000, blocks=256
 00000000000i[MEM0  ] rom at 0xfffe0000/131072 ('/usr/share/bochs/BIOS-bochs-latest')
 00000000000i[CPU0  ] WARNING: RDRAND would not produce true random numbers !
 00000000000i[CPU0  ] initialized CPU model corei7_haswell_4770
 00000000000i[DEV   ] will paste characters every 100 iodev timer ticks
-00000000000i[      ] lt_dlhandle is 0x5f57ff16ae50
+00000000000i[      ] lt_dlhandle is 0x592030402e50
 00000000000i[PLUGIN] loaded plugin libbx_soundalsa.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff17e500
+00000000000i[      ] lt_dlhandle is 0x592030416500
 00000000000i[PLUGIN] loaded plugin libbx_pci.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff16e030
+00000000000i[      ] lt_dlhandle is 0x592030406030
 00000000000i[PLUGIN] loaded plugin libbx_pci2isa.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff16f3f0
+00000000000i[      ] lt_dlhandle is 0x5920304073f0
 00000000000i[PLUGIN] loaded plugin libbx_usb_uhci.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff18bed0
+00000000000i[      ] lt_dlhandle is 0x592030423ed0
 00000000000i[PLUGIN] loaded plugin libbx_acpi.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff18c9b0
+00000000000i[      ] lt_dlhandle is 0x5920304249b0
 00000000000i[PLUGIN] loaded plugin libbx_hpet.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff18d840
+00000000000i[      ] lt_dlhandle is 0x592030425840
 00000000000i[PLUGIN] loaded plugin libbx_cmos.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff18df80
+00000000000i[      ] lt_dlhandle is 0x592030425f80
 00000000000i[PLUGIN] loaded plugin libbx_dma.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff18e900
+00000000000i[      ] lt_dlhandle is 0x592030426900
 00000000000i[PLUGIN] loaded plugin libbx_pic.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff18f150
+00000000000i[      ] lt_dlhandle is 0x592030427150
 00000000000i[PLUGIN] loaded plugin libbx_pit.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff18fa30
+00000000000i[      ] lt_dlhandle is 0x592030427a30
 00000000000i[PLUGIN] loaded plugin libbx_vga.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff1910e0
+00000000000i[      ] lt_dlhandle is 0x5920304290e0
 00000000000i[PLUGIN] loaded plugin libbx_floppy.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff191f00
+00000000000i[      ] lt_dlhandle is 0x592030429f00
 00000000000i[PLUGIN] loaded plugin libbx_ioapic.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff192840
+00000000000i[      ] lt_dlhandle is 0x59203042a840
 00000000000i[PLUGIN] loaded plugin libbx_keyboard.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff193160
+00000000000i[      ] lt_dlhandle is 0x59203042b160
 00000000000i[PLUGIN] loaded plugin libbx_harddrv.so
-00000000000i[      ] lt_dlhandle is 0x5f57ff195220
+00000000000i[      ] lt_dlhandle is 0x59203042d220
 00000000000i[PLUGIN] loaded plugin libbx_pci_ide.so
 00000000000i[PLUGIN] init_dev of 'pci' plugin device by virtual method
 00000000000i[DEV   ] i440FX PMC present at device 0, function 0
@@ -73,7 +73,7 @@
 00000000000i[DEV   ] PIIX3 PCI-to-ISA bridge present at device 1, function 0
 00000000000i[PLUGIN] init_dev of 'cmos' plugin device by virtual method
 00000000000i[CMOS  ] Using local time for initial clock
-00000000000i[CMOS  ] Setting initial clock to: Sat Nov 29 17:30:32   2025 tz=utc (time0=1764437432)
+00000000000i[CMOS  ] Setting initial clock to: Tue Dec  2 14:34:16   2025 tz=utc (time0=1764686056)
 00000000000i[PLUGIN] init_dev of 'dma' plugin device by virtual method
 00000000000i[DMA   ] channel 4 used by cascade
 00000000000i[PLUGIN] init_dev of 'pic' plugin device by virtual method

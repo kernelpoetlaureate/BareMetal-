@@ -1,107 +1,119 @@
-; kernel.asm - Pure assembly kernel
-[bits 32]               ; 32-bit protected mode
-[org 0x1000]           ; Kernel loads at this address
+; kernel.asm - Minimal Multitasking Kernel
+[bits 32]
+[org 0x1000]
 
-
-; we are marking our territory starting from 0x1000, which is lower than 
-;the address we used for boot.asm file (0x7c00),
-;so our kernel file is actually loaded 27,648 bytes below the boot.asm file.
-; this can be easily verified by in bochs debugger "<bochs:27> x /5000gx 0x1000"
-
-
-;0x0000000000001000 <bogus+       0>:    0xc08ed88e0010b866      0xe800090000bcd08e
-;0x0000000000001010 <bogus+      16>:    0xbffeeb00000002        0x47c66407c6000b80
-;0x0000000000001020 <bogus+      32>:    0x1059a1c30f01  0x105d1d3bcb01c389
-;0x0000000000001030 <bogus+      48>:    0x10591d89077f0000      0x6557c3c031c30000
-;0x0000000000001040 <bogus+      64>:    0x6f7420656d6f636c      0x206c656e72654b20
-;0x0000000000001050 <bogus+      80>:    0x10000000312e3076      0x4000000010000000
-;0x0000000000001060 <bogus+      96>:    0x00000000      0x00000000
-;0x0000000000001070 <bogus+     112>:    0x00000000      0x00000000
-;0x0000000000001080 <bogus+     128>:    0x00000000      0x00000000
-;0x0000000000001090 <bogus+     144>:    0x00000000      0x00000000
-
-;----------------------------------------
-
-;0x0000000000007b70 <bogus+   27504>:    0x7b8601f000000000      0x1001a431a30
-;0x0000000000007b80 <bogus+   27520>:    0x3f601f000010050       0x803f62d0d7b9c
-;0x0000000000007b90 <bogus+   27536>:    0x800000500f0100        0x64197bde01f003f0
-;0x0000000000007ba0 <bogus+   27552>:    0x2000000000    0x7b829fc00000
-;0x0000000000007bb0 <bogus+   27568>:    0x74000069187bde        0xf00000040
-;0x0000000000007bc0 <bogus+   27584>:    0x3f00010001003f        0x100000000001
-;0x0000000000007bd0 <bogus+   27600>:    0x00000002      0x7bfc000000000000
-;0x0000000000007be0 <bogus+   27616>:    0xffac0000000092d8      0x100000807bfc0000
-;0x0000000000007bf0 <bogus+   27632>:    0x7c477bfc00020080      0x7c1e0f8002060000
-;0x0000000000007c00 <bogus+   27648>:    0x897c00bd7cb51688      0x168a0fb61000bbec
-;0x0000000000007c10 <bogus+   27664>:    0xc7e58902ec837cb5      0xffa15eb7c1e0046
-;0x0000000000007c20 <bogus+   27680>:    0x66c0200f7c951601      0x9beac0220f01c883
-;0x0000000000007c30 <bogus+   27696>:    0xe58902ec8300087c      0xb5f08802b4005689
-;0x0000000000007c40 <bogus+   27712>:    0x7213cd02b100b600      0xc48300568be58916
-;0x0000000000007c50 <bogus+   27728>:    0x8be5890a75c63802      0xb0e6ff02c4830076
-;0x0000000000007c60 <bogus+   27744>:    0x46c7e58902ec8345      0xb4feeb02eb7c6d00
-;0x0000000000007c70 <bogus+   27760>:    0x768be58910cd0e        0xe6ff02c483
-;0x0000000000007c80 <bogus+   27776>:    0xffff0000000000        0xffff00cf9b0000
-;0x0000000000007c90 <bogus+   27792>:    0x7d001700cf930000      0x8e0010b86600007c
-;0x0000000000007ca0 <bogus+   27808>:    0x8ee08ec08ed08ed8      0xec8900090000bde8
-;0x0000000000007cb0 <bogus+   27824>:    0x80ffff934be9  0x00000000
-
-
-
-
-global _start          ; Entry point (not needed for flat binary, but good practice)
+global _start
 
 _start:
-    ; Initialize segments
-    mov ax, 0x10       ; If using GDT
+    ; 1. Setup Segments
+    mov ax, 0x10
     mov ds, ax
     mov es, ax
     mov ss, ax
-    mov esp, 0x90000   ; Stack
-    
-    ; Jump to main kernel code
+    mov esp, stack_a_top   ; Use our static stack for Task A
+
     call kernel_main
-    jmp $              ; Hang
+    jmp $
 
+; ============================================
+; MAIN KERNEL LOGIC
+; ============================================
 kernel_main:
-    ; Your kernel code here
-    mov edi, 0xB8000
-    mov byte [edi + 0], 'd'
-    mov byte [edi + 1], 0x0F
-    ; ... rest of characters ...
-    ret
+    ; Initialize the screen
+    call clear_screen
 
+    ; Create Task B (Pass function pointer and stack top)
+    mov ebx, task_b_entry
+    mov ecx, stack_b_top
+    call create_task
 
-                ; ============================================
-                ; MEMORY ALLOCATOR
-                ; ============================================
-
-                ; Simple bump allocator
-                ; ECX = size in bytes
-                ; Returns: EAX = address (or 0 if failed)
-malloc:
-    mov eax, [heap_current]
-    mov ebx, eax
-    add ebx, ecx
-    cmp ebx, [heap_end]
-    jg .failed
+    ; We are now "Task A". Let's loop and yield.
+.loop_a:
+    mov edi, 0xB8000        ; Top-left corner
+    mov byte [edi], 'A'     ; Print 'A'
+    mov byte [edi+1], 0x0F
     
-    mov [heap_current], ebx
+    call delay              ; Slow down so we can see it
+    call yield              ; Switch to Task B
+    jmp .loop_a
+
+; ============================================
+; TASK B LOGIC
+; ============================================
+task_b_entry:
+.loop_b:
+    mov edi, 0xB809E        ; A bit further down screen
+    mov byte [edi], 'B'     ; Print 'B'
+    mov byte [edi+1], 0x0E  ; Yellow color
+    
+    call delay
+    call yield              ; Switch back to Task A
+    jmp .loop_b
+
+; ============================================
+; MULTITASKING CORE (The Magic)
+; ============================================
+current_esp dd 0           ; Storage for current task's ESP
+next_esp    dd 0           ; Storage for next task's ESP
+
+; INPUT: EBX = Function Entry, ECX = Stack Top
+create_task:
+    mov esi, ecx           ; Go to top of new stack
+    
+    ; Emulate what 'yield' expects to pop off the stack
+    sub esi, 4
+    mov [esi], ebx         ; Return Address (EIP)
+    sub esi, 4
+    mov dword [esi], 0x202 ; EFLAGS (Interrupts enabled)
+    sub esi, 32            ; Allocate space for pushad (8 regs * 4 bytes)
+    
+    mov [next_esp], esi    ; Save this ready-to-go stack pointer
     ret
-.failed:
-    xor eax, eax
+
+; Switch execution between Task A and Task B
+yield:
+    pushad                 ; Save general registers
+    pushfd                 ; Save flags
+
+    mov [current_esp], esp ; Save current task's stack position
+    
+    ; SWAP logic: Swap current_esp and next_esp values
+    mov eax, [next_esp]
+    mov edx, [current_esp]
+    mov [current_esp], eax ; Prepare for next swap
+    mov [next_esp], edx    ; Prepare for next swap
+    
+    mov esp, eax           ; LOAD the other task's stack
+    
+    popfd                  ; Restore flags
+    popad                  ; Restore general registers
+    ret                    ; Returns into the OTHER task!
+
+; ============================================
+; UTILS & DATA
+; ============================================
+delay:                     ; Simple waste-time loop
+    mov ecx, 0xFFFFFF
+.wait: loop .wait
     ret
- 
-                ; ============================================
-                ;    DATA SECTION
-                ; ============================================
 
-msg_welcome db 'Welcome to Kernel v0.1', 0  
+clear_screen:
+    mov edi, 0xB8000
+    mov ecx, 80*25
+    mov ax, 0x0720         ; Black space
+    rep stosw
+    ret
 
-                ; Heap boundaries
-heap_start dd 0x100000      ; 1 MB
-heap_current dd 0x100000
-heap_end dd 0x400000        ; 4 MB limit
+; ============================================
+; PADDING (Fixes the Bochs Error)
+; ============================================
+; This calculates how many bytes are needed to reach the next 512-byte boundary
+; and fills them with zeros.
+times (512 - (($ - $$) % 512)) db 0
 
-
-                ; Optional: Add more functions below
-times 512-($-$$) db 0  ; Padding if you want alignment
-                
+; Stacks (Static allocation for simplicity)
+section .bss
+    resb 4096              ; 4KB Padding
+stack_a_top:
+    resb 4096              ; 4KB Padding
+stack_b_top:
