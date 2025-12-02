@@ -1,2 +1,53 @@
+# Compiled binaries
 *.bin
+*.lock
+*.img
+*.iso
+
+# Bootloader/kernel output
+boot.bin
+kernel.bin
 os-image.bin
+
+# Bochs files
+bochs.log
+*.bxrc
+*.ini
+*.rc
+
+# Temporary files
+*.o
+*.elf
+*.lst
+*.map
+
+# Object files from compilation
+obj/
+build/
+
+# Bochs configuration and logs
+bochsrc.txt
+bx_enh_dbg.ini
+debug.rc
+
+# Lock files
+*.lock
+
+# OS image files
+os-image*
+
+# Backup files
+*~
+*.bak
+*.swp
+*.swo
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.code-workspace
+
+# Documentation
+*.pdf
+*.doc
+*.docx
